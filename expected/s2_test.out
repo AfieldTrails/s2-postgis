@@ -1,5 +1,6 @@
 CREATE LANGUAGE plpython3u;
 CREATE EXTENSION s2;
+--CREATE OR REPLACE FUNCTION s2_cellid_from_latlng(lat real, lng real) RETURNS bigint
 SELECT s2_cellid_from_latlng(0, 0);
  s2_cellid_from_latlng 
 -----------------------
@@ -12,6 +13,47 @@ SELECT s2_cellid_from_latlng(40.5, -105.5);
   -8689295774057980903
 (1 row)
 
+--CREATE OR REPLACE FUNCTION s2_latlng_from_cellid(cellid bigint, OUT lat real, OUT lng real)
+SELECT s2_latlng_from_cellid(-8689295774057980903);
+ s2_latlng_from_cellid 
+-----------------------
+ (40.5,-105.5)
+(1 row)
+
+SELECT s2_cellid_parent(-8689295774057980903, 20);
+   s2_cellid_parent   
+----------------------
+ -8689295774058545152
+(1 row)
+
+SELECT s2_cellid_parent(-8689295774057980903, 1);
+   s2_cellid_parent   
+----------------------
+ -8935141660703064064
+(1 row)
+
+SELECT s2_cellid_level(s2_cellid_from_latlng(40.5, -105.5));
+ s2_cellid_level 
+-----------------
+              30
+(1 row)
+
+SELECT s2_cellid_level(s2_cellid_parent(s2_cellid_from_latlng(40.5, -105.5), 21));
+ s2_cellid_level 
+-----------------
+              21
+(1 row)
+
+SELECT s2_cellid_children(-8689295774058545152);
+  s2_cellid_children  
+----------------------
+ -8689295774059331584
+ -8689295774058807296
+ -8689295774058283008
+ -8689295774057758720
+(4 rows)
+
+--CREATE OR REPLACE FUNCTION s2_token_from_latlng(lat real, lng real) RETURNS text
 SELECT s2_token_from_latlng(0, 0);
  s2_token_from_latlng 
 ----------------------
@@ -22,5 +64,275 @@ SELECT s2_token_from_latlng(40.5, -105.5);
  s2_token_from_latlng 
 ----------------------
  87696b8806f89c19
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_token_from_cellid(cellid bigint) RETURNS text
+SELECT s2_token_from_cellid(0);
+ s2_token_from_cellid 
+----------------------
+ 
+(1 row)
+
+SELECT s2_token_from_cellid(s2_cellid_from_latlng(40.5, -105.5));
+ s2_token_from_cellid 
+----------------------
+ 87696b8806f89c19
+(1 row)
+
+SELECT s2_token_from_cellid(s2_cellid_parent(s2_cellid_from_latlng(40.5, -105.5), 10));
+ s2_token_from_cellid 
+----------------------
+ 87696b
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_cellid_from_token(token text) RETURNS bigint
+SELECT s2_cellid_from_token('');
+ s2_cellid_from_token 
+----------------------
+                    0
+(1 row)
+
+SELECT s2_cellid_from_token('zzz'); -- Note this currently causes an error, not id 0
+ERROR:  ValueError: invalid literal for int() with base 16: 'zzz0000000000000'
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "s2_cellid_from_token", line 3, in <module>
+    id = s2sphere.CellId.from_token(token)
+  PL/Python function "s2_cellid_from_token", line 1459, in from_token
+PL/Python function "s2_cellid_from_token"
+SELECT s2_cellid_from_token('87696b8806f89c19');
+ s2_cellid_from_token 
+----------------------
+ -8689295774057980903
+(1 row)
+
+SELECT s2_cellid_from_token('8');
+ s2_cellid_from_token 
+----------------------
+ -9223372036854775808
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_latlng_from_token(token text, OUT lat real, OUT lng real)
+SELECT s2_latlng_from_token('87696b8806f89c19');
+ s2_latlng_from_token 
+----------------------
+ (40.5,-105.5)
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_cellid_is_valid(cellid bigint) RETURNS int
+SELECT s2_cellid_is_valid(-8689295774058545152);
+ s2_cellid_is_valid 
+--------------------
+ t
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_cellid_is_leaf(cellid bigint) RETURNS int
+SELECT s2_cellid_is_leaf(s2_cellid_from_latlng(40.5, -105.5));
+ s2_cellid_is_leaf 
+-------------------
+ t
+(1 row)
+
+SELECT s2_cellid_is_leaf(s2_cellid_parent(-8689295774058545152, 15));
+ s2_cellid_is_leaf 
+-------------------
+ f
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_cellid_level(cellid bigint) RETURNS int
+SELECT s2_cellid_level(-8689295774058545152);
+ s2_cellid_level 
+-----------------
+              20
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_cellid_parent(cellid bigint, parent_level int) RETURNS bigint
+SELECT s2_cellid_parent(-8689295774058545152, 15);
+   s2_cellid_parent   
+----------------------
+ -8689295773101195264
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_cellid_children(cellid bigint) RETURNS SETOF bigint
+SELECT s2_cellid_children(-8689295774058545152);
+  s2_cellid_children  
+----------------------
+ -8689295774059331584
+ -8689295774058807296
+ -8689295774058283008
+ -8689295774057758720
+(4 rows)
+
+SELECT s2_cellid_children(s2_cellid_from_latlng(40.5, -105.5));
+ s2_cellid_children 
+--------------------
+(0 rows)
+
+SELECT s2_cellid_children(s2_cellid_parent(-8689295774058545152, 15));
+  s2_cellid_children  
+----------------------
+ -8689295773906501632
+ -8689295773369630720
+ -8689295772832759808
+ -8689295772295888896
+(4 rows)
+
+--CREATE OR REPLACE FUNCTION s2_cellid_edge_neighbors(cellid bigint) RETURNS SETOF bigint
+SELECT s2_cellid_edge_neighbors(-8689295774058545152);
+ s2_cellid_edge_neighbors 
+--------------------------
+     -8689295774060642304
+     -8689295774064836608
+     -8689295774069030912
+     -8689295774056448000
+(4 rows)
+
+--CREATE OR REPLACE FUNCTION s2_cellid_contains(a bigint, b bigint) RETURNS bool
+SELECT s2_cellid_contains(-8689295774058545152, -8689295774058545152);
+ s2_cellid_contains 
+--------------------
+ t
+(1 row)
+
+SELECT s2_cellid_contains(-8689295774058545152, s2_cellid_parent(-8689295774058545152, 20));
+ s2_cellid_contains 
+--------------------
+ t
+(1 row)
+
+SELECT s2_cellid_contains(s2_cellid_parent(-8689295774058545152, 20), -8689295774058545152);
+ s2_cellid_contains 
+--------------------
+ t
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_cellid_intersects(a bigint, b bigint) RETURNS bool
+SELECT s2_cellid_intersects(-8689295774058545152, -8689295774058545152);
+ s2_cellid_intersects 
+----------------------
+ t
+(1 row)
+
+SELECT s2_cellid_contains(-8689295774058545152, s2_cellid_parent(-8689295774058545152, 20));
+ s2_cellid_contains 
+--------------------
+ t
+(1 row)
+
+SELECT s2_cellid_contains(s2_cellid_parent(-8689295774058545152, 20), -8689295774058545152);
+ s2_cellid_contains 
+--------------------
+ t
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_token_is_valid(token text) RETURNS bool
+SELECT s2_token_is_valid('87696b8806f89c19');
+ s2_token_is_valid 
+-------------------
+ t
+(1 row)
+
+SELECT s2_token_is_valid('8769b');
+ s2_token_is_valid 
+-------------------
+ t
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_token_is_leaf(token text) RETURNS bool
+SELECT s2_token_is_leaf('87696b8806f89c19');
+ s2_token_is_leaf 
+------------------
+ t
+(1 row)
+
+SELECT s2_token_is_leaf('8769b');
+ s2_token_is_leaf 
+------------------
+ f
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_token_level(token text) RETURNS int
+SELECT s2_token_level('87696b8806f89c19');
+ s2_token_level 
+----------------
+             30
+(1 row)
+
+SELECT s2_token_level('8769b');
+ s2_token_level 
+----------------
+              8
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_token_parent(token text, parent_level int) RETURNS text
+SELECT s2_token_parent('87696b8806f89c19', 15);
+ s2_token_parent 
+-----------------
+ 87696b884
+(1 row)
+
+SELECT s2_token_parent('8769b', 5);
+ s2_token_parent 
+-----------------
+ 876c
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_token_children(token text) RETURNS SETOF text
+SELECT s2_token_children('87696b8806f89c19');
+ s2_token_children 
+-------------------
+(0 rows)
+
+SELECT s2_token_children('8769b');
+ s2_token_children 
+-------------------
+ 8769a4
+ 8769ac
+ 8769b4
+ 8769bc
+(4 rows)
+
+--CREATE OR REPLACE FUNCTION s2_token_edge_neighbors(token text) RETURNS SETOF text
+SELECT s2_token_edge_neighbors('87696b8806f89c19');
+ s2_token_edge_neighbors 
+-------------------------
+ 87696b8806f89c1b
+ 87696b8806f89c17
+ 87696b8806f89c23
+ 87696b8806f89c1f
+(4 rows)
+
+SELECT s2_token_edge_neighbors('87696b');
+ s2_token_edge_neighbors 
+-------------------------
+ 87696d
+ 876969
+ 876941
+ 876915
+(4 rows)
+
+--CREATE OR REPLACE FUNCTION s2_token_contains(a text, b text) RETURNS bool
+SELECT s2_token_contains('87696b8806f89c19', '87696b');
+ s2_token_contains 
+-------------------
+ f
+(1 row)
+
+SELECT s2_token_contains('87696b', '87696b8806f89c19');
+ s2_token_contains 
+-------------------
+ t
+(1 row)
+
+--CREATE OR REPLACE FUNCTION s2_token_intersects(a text, b text) RETURNS bool
+SELECT s2_token_intersects('87696b8806f89c19', '87696b');
+ s2_token_intersects 
+---------------------
+ t
+(1 row)
+
+SELECT s2_token_intersects('87696b', '87696b8806f89c19');
+ s2_token_intersects 
+---------------------
+ t
 (1 row)
 
