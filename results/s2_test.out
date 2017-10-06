@@ -1,0 +1,26 @@
+CREATE LANGUAGE plpython3u;
+CREATE EXTENSION s2;
+SELECT s2_cellid_from_latlng(0, 0);
+ s2_cellid_from_latlng 
+-----------------------
+   1152921504606846977
+(1 row)
+
+SELECT s2_cellid_from_latlng(40.5, -105.5);
+ s2_cellid_from_latlng 
+-----------------------
+  -8689295774057980903
+(1 row)
+
+SELECT s2_token_from_latlng(0, 0);
+ s2_token_from_latlng 
+----------------------
+ 1000000000000001
+(1 row)
+
+SELECT s2_token_from_latlng(40.5, -105.5);
+ s2_token_from_latlng 
+----------------------
+ 87696b8806f89c19
+(1 row)
+

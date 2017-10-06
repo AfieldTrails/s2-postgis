@@ -1,0 +1,4 @@
+# s2 extension
+comment = 's2 cell encoding using the python s2sphere library'
+default_version = '0.0.1'
+relocatable = true
