@@ -1,5 +1,5 @@
 EXTENSION = s2 # the extension's name
-DATA = s2--0.0.1.sql  # script files to install
+DATA = s2--0.0.2.sql  # script files to install
 REGRESS = s2_test
 
 # postgres build stuff

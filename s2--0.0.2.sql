@@ -11,7 +11,7 @@
 
 -- PostgreSQL doesn't handle unsigned ints, so we have to re-interpret the byte representation
 -- of the id.
-CREATE OR REPLACE FUNCTION s2_cellid_from_latlng(lat real, lng real) RETURNS bigint
+CREATE OR REPLACE FUNCTION s2_cellid_from_latlng(lat double precision, lng double precision) RETURNS bigint
 AS $$
   import s2sphere
   id = s2sphere.CellId.from_lat_lng(s2sphere.LatLng.from_degrees(lat, lng))
@@ -27,7 +27,7 @@ AS $$
 $$ LANGUAGE plpython3u IMMUTABLE STRICT;
 
 -- Get the string token for a cellid from the latitude and longitude
-CREATE OR REPLACE FUNCTION s2_token_from_latlng(lat real, lng real) RETURNS text
+CREATE OR REPLACE FUNCTION s2_token_from_latlng(lat double precision, lng double precision) RETURNS text
 AS $$
   import s2sphere
   id = s2sphere.CellId.from_lat_lng(s2sphere.LatLng.from_degrees(lat, lng))
@@ -43,7 +43,7 @@ AS $$
 $$ LANGUAGE plpython3u IMMUTABLE STRICT;
 
 -- Get the latitude and longitude as degrees from a cellid
-CREATE OR REPLACE FUNCTION s2_latlng_from_cellid(cellid bigint, OUT lat real, OUT lng real)
+CREATE OR REPLACE FUNCTION s2_latlng_from_cellid(cellid bigint, OUT lat double precision, OUT lng double precision)
 AS $$
   import s2sphere
   id = s2sphere.CellId(int.from_bytes(cellid.to_bytes(8, 'big', signed=True), 'big', signed=False))
@@ -52,7 +52,7 @@ AS $$
 $$ LANGUAGE plpython3u IMMUTABLE STRICT;
 
 -- Get the latitude and longitude as degrees from a token 
-CREATE OR REPLACE FUNCTION s2_latlng_from_token(token text, OUT lat real, OUT lng real)
+CREATE OR REPLACE FUNCTION s2_latlng_from_token(token text, OUT lat double precision, OUT lng double precision)
 AS $$
   import s2sphere
   id = s2sphere.CellId.from_token(token)
